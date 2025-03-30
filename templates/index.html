@@ -13,7 +13,7 @@
     <div class="sidebar">
         <div>
             <div class="logo-container">
-                <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" alt="Spotify Logo" style="width: 80%; margin-bottom: 20px;">
+                <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" alt="Deezer Logo" style="width: 80%; margin-bottom: 20px;">
             </div>
             <div class="menu">
                 <a href="#">🏠 Home</a>
@@ -28,12 +28,12 @@
     <div class="content">
         <div class="header">
             <div class="search-bar">
-                <input type="text" id="search-input" placeholder="Что хочешь включить?">
+                <input type="text" id="search-input" placeholder="What do you want to listen to?">
                 <button onclick="search()">🔍</button>
             </div>
         </div>
 
-        <h2>Чарты Казахстана</h2>
+        <h2>Top Tracks</h2>
         <div class="charts-grid"></div>
     </div>
 
@@ -46,130 +46,129 @@
 
     <script>
         async function fetchCharts() {
-    try {
-        const response = await fetch('/get_charts/');
-        const charts = await response.json();
-        const chartsGrid = document.querySelector('.charts-grid');
+            try {
+                const response = await fetch('/get_charts/');
+                const charts = await response.json();
+                const chartsGrid = document.querySelector('.charts-grid');
 
-        chartsGrid.innerHTML = '';
-        charts.slice(0, 30).forEach((track) => {
-            const card = document.createElement('div');
-            card.classList.add('chart-card');
-            card.innerHTML = `
-                <img src="${track.cover}" alt="${track.title}">
-                <div class="title">${track.title}</div>
-                <div class="artist">${track.artist}</div>
-            `;
-            card.addEventListener('click', () => {
-                if (!track.track_id) {
-                    console.error('track_id не найден для трека:', track.title);
-                    alert(`Этот трек (${track.title}) недоступен для воспроизведения.`);
+                chartsGrid.innerHTML = '';
+                charts.slice(0, 30).forEach((track) => {
+                    const card = document.createElement('div');
+                    card.classList.add('chart-card');
+                    card.innerHTML = `
+                        <img src="${track.cover}" alt="${track.title}">
+                        <div class="title">${track.title}</div>
+                        <div class="artist">${track.artist}</div>
+                    `;
+                    card.addEventListener('click', () => {
+                        if (!track.track_id) {
+                            console.error('track_id not found for track:', track.title);
+                            alert(`This track (${track.title}) is not available for playback.`);
+                            return;
+                        }
+
+                        const trackData = {
+                            title: track.title,
+                            artist: track.artist,
+                            artist_id: track.artist_id,
+                            cover: track.cover,
+                            preview_url: track.preview_url || null,
+                            track_id: track.track_id
+                        };
+
+                        localStorage.setItem('currentTrack', JSON.stringify(trackData));
+                        window.location.href = `/music/?track_id=${track.track_id}`;
+                    });
+                    chartsGrid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error loading charts:', error);
+            }
+        }
+
+        async function search() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+
+            try {
+                const response = await fetch(`/search/?q=${encodeURIComponent(query)}`);
+
+                if (!response.ok) {
+                    console.error('Error with request:', await response.text());
+                    alert('Error searching. Please try again.');
                     return;
                 }
 
-                const trackData = {
-                    title: track.title,
-                    artist: track.artist,
-                    artist_id: track.artist_id,
-                    cover: track.cover,
-                    preview_url: track.preview_url || null,
-                    track_id: track.track_id
-                };
+                const results = await response.json();
 
-                localStorage.setItem('currentTrack', JSON.stringify(trackData));
-                window.location.href = `/music/?track_id=${track.track_id}`;
+                const artistsList = document.getElementById('artists-list');
+                const tracksList = document.getElementById('tracks-list');
+                artistsList.innerHTML = '';
+                tracksList.innerHTML = '';
+
+                if (results.artists && results.artists.length > 0) {
+                    results.artists.forEach(artist => {
+                        const artistCard = document.createElement('div');
+                        artistCard.classList.add('artist-card');
+                        artistCard.innerHTML = `
+                            <img src="${artist.cover}" alt="${artist.name}">
+                            <div class="artist-name">${artist.name}</div>
+                        `;
+                        artistCard.addEventListener('click', () => {
+                            window.location.href = `/artist/${artist.id}/`;
+                        });
+                        artistsList.appendChild(artistCard);
+                    });
+                }
+
+                if (results.tracks && results.tracks.length > 0) {
+                    results.tracks.forEach(track => {
+                        const trackCard = document.createElement('div');
+                        trackCard.classList.add('track-card');
+                        trackCard.innerHTML = `
+                            <div class="track-details">
+                                <img src="${track.cover}" alt="${track.title}">
+                                <div>
+                                    <div class="track-title">${track.title}</div>
+                                    <div class="track-artist">${track.artist}</div>
+                                </div>
+                            </div>
+                        `;
+                        trackCard.addEventListener('click', () => {
+                            const trackData = {
+                                title: track.title,
+                                artist: track.artist,
+                                artist_id: track.artist_id,
+                                cover: track.cover,
+                                preview_url: track.preview_url,
+                                track_id: track.track_id
+                            };
+                            localStorage.setItem('currentTrack', JSON.stringify(trackData));
+                            window.location.href = `/music/?track_id=${track.track_id}`;
+                        });
+                        tracksList.appendChild(trackCard);
+                    });
+                }
+
+                document.getElementById('search-overlay').style.display = 'block';
+            } catch (error) {
+                console.error('Error searching:', error);
+                alert('An error occurred while searching. Please try again.');
+            }
+        }
+
+        function closeSearch() {
+            document.getElementById('search-overlay').style.display = 'none';
+            document.getElementById('search-input').value = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    search();
+                }
             });
-            chartsGrid.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Ошибка загрузки чартов:', error);
-    }
-}
-
-
-       async function search() {
-    const query = document.getElementById('search-input').value.trim();
-    if (!query) return;
-
-    try {
-        const response = await fetch(`/search/?q=${encodeURIComponent(query)}`);
-
-        if (!response.ok) {
-            console.error('Ошибка при запросе:', await response.text());
-            alert('Ошибка при поиске. Попробуйте снова.');
-            return;
-        }
-
-        const results = await response.json();
-
-        const artistsList = document.getElementById('artists-list');
-        const tracksList = document.getElementById('tracks-list');
-        artistsList.innerHTML = '';
-        tracksList.innerHTML = '';
-
-        if (results.artists && results.artists.length > 0) {
-            results.artists.forEach(artist => {
-                const artistCard = document.createElement('div');
-                artistCard.classList.add('artist-card');
-                artistCard.innerHTML = `
-                    <img src="${artist.cover}" alt="${artist.name}">
-                    <div class="artist-name">${artist.name}</div>
-                `;
-                artistCard.addEventListener('click', () => {
-                    window.location.href = `/artist/${artist.id}`;
-                });
-                artistsList.appendChild(artistCard);
-            });
-        }
-
-        if (results.tracks && results.tracks.length > 0) {
-            results.tracks.forEach(track => {
-                const trackCard = document.createElement('div');
-                trackCard.classList.add('track-card');
-                trackCard.innerHTML = `
-                    <div class="track-details">
-                        <img src="${track.cover}" alt="${track.title}">
-                        <div>
-                            <div class="track-title">${track.title}</div>
-                            <div class="track-artist">${track.artist}</div>
-                        </div>
-                    </div>
-                `;
-                trackCard.addEventListener('click', () => {
-                    const trackData = {
-                        title: track.title,
-                        artist: track.artist,
-                        artist_id: track.artist_id,
-                        cover: track.cover,
-                        preview_url: track.preview_url,
-                        track_id: track.track_id
-                    };
-                    localStorage.setItem('currentTrack', JSON.stringify(trackData));
-                    window.location.href = `/music/?track_id=${track.track_id}`;
-                });
-                tracksList.appendChild(trackCard);
-            });
-        }
-
-        document.getElementById('search-overlay').style.display = 'block';
-    } catch (error) {
-        console.error('Ошибка при поиске:', error);
-        alert('Произошла ошибка при поиске. Попробуйте снова.');
-    }
-}
-
-function closeSearch() {
-    document.getElementById('search-overlay').style.display = 'none';
-    document.getElementById('search-input').value = '';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            search();
-        }
-    });
 
             fetchCharts();
         });

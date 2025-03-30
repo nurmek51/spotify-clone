@@ -86,6 +86,18 @@
             font-size: 30px;
             cursor: pointer;
         }
+
+        .volume-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .volume-slider {
+            width: 100px;
+        }
     </style>
 </head>
 <body>
@@ -93,7 +105,7 @@
         <div>
             <div class="logo-container">
                 <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png"
-                     alt="Spotify Logo"
+                     alt="Deezer Logo"
                      style="width: 80%; margin-bottom: 20px;">
             </div>
             <div class="menu">
@@ -127,23 +139,17 @@
         </div>
 
         <div class="volume-container">
-                    <span>🔊</span>
-                    <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
-                </div>
+            <span>🔊</span>
+            <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
+        </div>
         <audio id="audio-player"></audio>
-
     </div>
 
     <script>
-        const volumeSlider = document.getElementById('volume-slider');
-            volumeSlider.addEventListener('input', (e) => {
-                audioPlayer.volume = e.target.value;
-            });
-
         document.addEventListener('DOMContentLoaded', async () => {
             const trackId = new URLSearchParams(window.location.search).get('track_id');
             if (!trackId) {
-                alert("Трек не найден.");
+                alert("Track not found.");
                 return;
             }
 
@@ -204,14 +210,17 @@
                             const duration = audioPlayer.duration;
                             audioPlayer.currentTime = (clickX / width) * duration;
                         });
+
+                        // Set initial volume
+                        audioPlayer.volume = volumeSlider.value;
                     } else {
-                        alert("Трек недоступен для прослушивания.");
+                        alert("Track not available for listening.");
                     }
                 } else {
-                    alert("Ошибка при загрузке трека: " + data.message);
+                    alert("Error loading track: " + data.message);
                 }
             } catch (error) {
-                console.error("Ошибка при запросе трека:", error);
+                console.error("Error requesting track:", error);
             }
         });
     </script>

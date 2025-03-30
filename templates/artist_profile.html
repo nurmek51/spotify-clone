@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ artist_info.artist_name }} - Профиль</title>
+    <title>{{ artist_info.artist_name }} - Profile</title>
     <style>
         body {
             background-color: #121212;
@@ -26,6 +26,7 @@
             height: 200px;
             border-radius: 15px;
             margin-right: 20px;
+            object-fit: cover;
         }
         .artist-banner h1 {
             margin: 0;
@@ -47,15 +48,25 @@
             width: 50px;
             height: 50px;
             margin-right: 20px;
+            object-fit: cover;
         }
         .track-info {
             flex-grow: 1;
         }
         .album-list {
             margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
         }
         .album-item {
-            padding: 5px 0;
+            padding: 10px;
+            background-color: #181818;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+        .album-item:hover {
+            background-color: #282828;
         }
         a {
             color: white;
@@ -64,43 +75,74 @@
         a:hover {
             text-decoration: underline;
         }
+        .navigation {
+            padding: 10px 20px;
+        }
+        .home-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #1db954;
+            border-radius: 20px;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+        .no-content {
+            color: #777;
+            font-style: italic;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
+    <div class="navigation">
+        <a href="/" class="home-link">← Back to Home</a>
+    </div>
     <div class="container">
         <div class="artist-banner">
-            <img src="{{ artist_info.artist_image }}" alt="Artist Image">
+            <img src="{{ artist_info.artist_image }}" alt="{{ artist_info.artist_name }}">
             <div>
                 <h1>{{ artist_info.artist_name }}</h1>
                 <p>{{ artist_info.artist_description }}</p>
             </div>
         </div>
 
-        <h2>Популярные треки</h2>
+        <h2>Popular Tracks</h2>
         <div class="track-list">
-            {% for track in artist_info.tracks %}
-                <div class="track-item" onclick="playTrack('{{ track.track_id }}', '{{ track.title }}', '{{ track.artist }}', '{{ track.artist_id }}', '{{ track.cover }}', '{{ track.preview_url }}')">
-                    <img src="{{ track.cover }}" alt="Track Cover">
-                    <div class="track-info">
-                        <div>{{ track.title }}</div>
-                        <div style="color: grey;">{{ track.artist }}</div>
+            {% if artist_info.tracks %}
+                {% for track in artist_info.tracks %}
+                    <div class="track-item" onclick="playTrack('{{ track.track_id }}', '{{ track.title }}', '{{ track.artist }}', '{{ track.artist_id }}', '{{ track.cover }}', '{{ track.preview_url }}')">
+                        <img src="{{ track.cover }}" alt="{{ track.title }}">
+                        <div class="track-info">
+                            <div>{{ track.title }}</div>
+                            <div style="color: grey;">{{ track.artist }}</div>
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <div class="no-content">No tracks available for this artist</div>
+            {% endif %}
         </div>
 
-        <h2>Альбомы</h2>
+        <h2>Albums</h2>
         <div class="album-list">
-            {% for album in artist_info.albums %}
-                <div class="album-item">{{ album.title }} ({{ album.year }})</div>
-            {% endfor %}
+            {% if artist_info.albums %}
+                {% for album in artist_info.albums %}
+                    <div class="album-item">
+                        <div>{{ album.title }}</div>
+                        <div style="color: grey;">{{ album.year }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-content">No albums available for this artist</div>
+            {% endif %}
         </div>
     </div>
 
     <script>
         function playTrack(trackId, title, artist, artistId, cover, previewUrl) {
             if (!trackId) {
-                alert('Трек не найден!');
+                alert('Track not found!');
                 return;
             }
 
