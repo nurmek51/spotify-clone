@@ -1,5 +1,4 @@
 Django==5.1.7
 psycopg2==2.9.7
-yandex-music==1.2.0
 python-dotenv==1.0.0
 requests==2.31.0
