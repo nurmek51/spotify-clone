@@ -1,6 +1,6 @@
 # Music Streaming Application
 
-**Live Demo:** [nurmek.site](https://nurmek.site)
+**Live Demo:** [nurmek.site](https://spotify.nurmek.site)
 
 ## Overview
 
